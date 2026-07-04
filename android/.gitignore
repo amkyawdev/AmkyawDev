@@ -1,0 +1,14 @@
+# Android
+*.apk
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+.gradle/
+build/
+local.properties
+*.iml
+*.keystore
+!debug.keystore

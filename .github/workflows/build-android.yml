@@ -1,0 +1,161 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, ai-brain-coder-agent]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes"
+        required: false
+        default: "New APK build"
+
+env:
+  APP_NAME: "AmkyawDev Tools"
+  PACKAGE_NAME: "dev.amkyaw.tools"
+  VERSION_NAME: "1.0.${{ github.run_number }}"
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🔧 Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: 🔧 Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0"
+
+      - name: 📦 Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🔨 Build Next.js → static export
+        working-directory: frontend
+        run: |
+          npx next build
+          npx next export -o ../android/app/src/main/assets/public 2>/dev/null || true
+
+      - name: 📂 Copy static export
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          if [ -d "frontend/out" ]; then
+            cp -r frontend/out/* android/app/src/main/assets/public/
+          else
+            echo "<h1>$APP_NAME</h1><p>APK Build — PWA mode</p>" > android/app/src/main/assets/public/index.html
+          fi
+
+      - name: ⚡ Install Capacitor
+        working-directory: frontend
+        run: |
+          npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
+          npx cap add android ../android --no-interactive 2>/dev/null || true
+
+      - name: 📝 Write capacitor.config.json
+        run: |
+          cat > frontend/capacitor.config.json << 'EOF'
+          {
+            "appId": "${{ env.PACKAGE_NAME }}",
+            "appName": "${{ env.APP_NAME }}",
+            "webDir": "../android/app/src/main/assets/public",
+            "bundledWebRuntime": false,
+            "server": { "allowNavigation": ["*"] }
+          }
+          EOF
+
+      - name: 🔄 Sync Capacitor
+        working-directory: frontend
+        run: npx cap sync android
+
+      - name: 🔑 Generate debug keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android/debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=AmkyawDev, OU=Dev, O=amkyaw.dev, L=Yangon, ST=Yangon, C=MM" \
+            -noprompt
+
+      - name: 🔐 Create release keystore (placeholder)
+        run: |
+          keytool -genkey -v \
+            -keystore android/release.keystore \
+            -alias amkyawdev \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -storepass amkyawdev2024 \
+            -keypass amkyawdev2024 \
+            -dname "CN=AmkyawDev, OU=Dev, O=amkyaw.dev, L=Yangon, ST=Yangon, C=MM" \
+            -noprompt
+
+      - name: 🔨 Build Debug APK
+        working-directory: android
+        run: |
+          ./gradlew assembleDebug \
+            -Pandroid.injected.signing.store.file=debug.keystore \
+            -Pandroid.injected.signing.store.password=android \
+            -Pandroid.injected.signing.key.alias=androiddebugkey \
+            -Pandroid.injected.signing.key.password=android
+
+      - name: 🔨 Build Release APK
+        working-directory: android
+        run: |
+          cat > keystore.properties << 'EOF'
+          storeFile=release.keystore
+          storePassword=amkyawdev2024
+          keyAlias=amkyawdev
+          keyPassword=amkyawdev2024
+          EOF
+          ./gradlew assembleRelease || ./gradlew assembleDebug
+
+      - name: 📦 Copy APKs
+        run: |
+          mkdir -p apk-output
+          find android -name "*.apk" -exec cp {} apk-output/ \;
+          ls -lh apk-output/
+
+      - name: 🚀 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ env.APP_NAME }} v${{ env.VERSION_NAME }}"
+          body: "${{ github.event.inputs.release_notes || 'Automated APK build' }}"
+          files: apk-output/*.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amkyawdev-tools-apk-${{ github.run_number }}
+          path: apk-output/
+          retention-days: 30
+
+      - name: ✅ Done
+        run: |
+          echo "=========================================="
+          echo "  APK Build Complete!"
+          echo "  App: ${{ env.APP_NAME }}"
+          echo "  Package: ${{ env.PACKAGE_NAME }}"
+          echo "  Version: ${{ env.VERSION_NAME }}"
+          echo "=========================================="

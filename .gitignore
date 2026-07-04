@@ -27,8 +27,14 @@ out/
 .DS_Store
 Thumbs.db
 
-# Docker
-.docker/
+# Android
+*.apk
+*.aab
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.iml
 
 # Logs
 *.log
