@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors;
+  }
+  .sidebar-link.active {
+    @apply bg-primary-50 text-primary-700 font-medium;
+  }
+  .chat-bubble-user {
+    @apply bg-primary-500 text-white rounded-2xl rounded-br-md px-4 py-3 max-w-[85%] self-end;
+  }
+  .chat-bubble-assistant {
+    @apply bg-slate-100 text-slate-800 rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%] self-start;
+  }
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors font-medium;
+  }
+  .input-field {
+    @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+}
+
+pre {
+  @apply rounded-xl !bg-slate-900 !p-4 overflow-x-auto;
+}
+
+code {
+  @apply text-sm;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
