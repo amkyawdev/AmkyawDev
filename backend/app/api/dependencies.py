@@ -1,16 +1,22 @@
 from fastapi import Depends
-from app.services.openrouter_service import OpenRouterService
-from app.core.skill_loader import SkillLoader
-_openrouter=None
-_skill_loader=None
-def get_openrouter():
-    global _openrouter
-    if _openrouter is None:_openrouter=OpenRouterService()
-    return _openrouter
-def get_skill_loader():
-    global _skill_loader
-    if _skill_loader is None:_skill_loader=SkillLoader()
-    return _skill_loader
+try:
+    from app.services.openrouter_service import OpenRouterService
+    _openrouter=None
+    def get_openrouter():
+        global _openrouter
+        if _openrouter is None:_openrouter=OpenRouterService()
+        return _openrouter
+except ImportError:
+    def get_openrouter():return None
+try:
+    from app.core.skill_loader import SkillLoader
+    _skill_loader=None
+    def get_skill_loader():
+        global _skill_loader
+        if _skill_loader is None:_skill_loader=SkillLoader()
+        return _skill_loader
+except ImportError:
+    def get_skill_loader():return None
 def _try_get(sn,f):
     c=getattr(_try_get,"c",{})
     if sn not in c:
