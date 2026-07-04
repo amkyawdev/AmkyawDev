@@ -7,7 +7,6 @@ import { sendChatMessage } from "@/lib/api-client";
 import { toast } from "sonner";
 
 interface Message { role: "user" | "assistant"; content: string; }
-
 const SKILLS_OPTIONS = [
   { value: "python-expert", label: "Python Expert" },
   { value: "react-developer", label: "React Developer" },
@@ -24,17 +23,15 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
   const toggleSkill = (skill: string) => setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]);
-
   const handleSend = async () => {
     if (!input.trim() || loading) return;
-    const userMessage: Message = { role: "user", content: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
+    const um: Message = { role: "user", content: input.trim() };
+    setMessages((prev) => [...prev, um]);
     setInput("");
     setLoading(true);
     try {
-      const r = await sendChatMessage({ messages: [...messages, userMessage], skills: selectedSkills.length > 0 ? selectedSkills : undefined });
+      const r = await sendChatMessage({ messages: [...messages, um], skills: selectedSkills.length > 0 ? selectedSkills : undefined });
       setMessages((prev) => [...prev, { role: "assistant", content: r.message }]);
     } catch (e: any) { toast.error(e.message || "Failed"); }
     finally { setLoading(false); }
