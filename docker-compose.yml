@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ai-brain-backend
+    container_name: amkyawdev-backend
     ports:
       - "8000:8000"
     env_file:
@@ -14,13 +14,13 @@ services:
       - ./backend/.amkyaw:/app/.amkyaw:ro
     restart: unless-stopped
     networks:
-      - ai-brain-network
+      - amkyawdev-network
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: ai-brain-frontend
+    container_name: amkyawdev-frontend
     ports:
       - "3000:3000"
     env_file:
@@ -30,8 +30,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - ai-brain-network
+      - amkyawdev-network
 
 networks:
-  ai-brain-network:
+  amkyawdev-network:
     driver: bridge

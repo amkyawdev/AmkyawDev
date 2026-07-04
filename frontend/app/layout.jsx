@@ -3,8 +3,8 @@ import { Toaster } from "sonner";
 import Sidebar from "@/components/UI/Sidebar";
 
 export const metadata = {
-  title: "AI Brain Coder Agent",
-  description: "AI-powered coding assistant with dynamic skill loading",
+  title: "AmkyawDev Tools",
+  description: "AI-powered coding platform — amkyaw.dev",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,9 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-slate-50">
-            {children}
-          </main>
+          <main className="flex-1 overflow-y-auto bg-slate-50">{children}</main>
         </div>
         <Toaster position="bottom-right" />
       </body>
