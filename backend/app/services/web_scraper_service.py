@@ -23,10 +23,14 @@ class WebScraperService:
     """
 
     def __init__(self):
-        self.api_key = os.getenv("BROWSERLESS_API_KEY", "")
-        self.base_url = os.getenv("BROWSERLESS_BASE_URL", "https://chrome.browserless.io")
+        # Support both BROWSERLESS_ and BROWSERLESS_ prefix
+        self.api_key = os.getenv("BROWSERLESS_API_KEY", os.getenv("BROWSERLESS_API_KEY", ""))
+        self.base_url = os.getenv("BROWSERLESS_BASE_URL", os.getenv("BROWSERLESS_URL", "https://chrome.browserless.io"))
         self.timeout = int(os.getenv("BROWSERLESS_TIMEOUT", "30"))
-        self.enabled = bool(self.api_key)
+        # Enable if either API key OR custom URL is configured
+        self.enabled = bool(self.api_key) or "browserless" not in self.base_url.lower()
+        
+        logger.info(f"WebScraper initialized: enabled={self.enabled}, url={self.base_url}")
 
     async def fetch_page(
         self,
@@ -36,11 +40,15 @@ class WebScraperService:
     ) -> Optional[str]:
         """Fetch HTML content from a URL."""
         if not self.enabled:
-            logger.warning("Browserless API key not configured")
+            logger.warning("Browserless not configured - set BROWSERLESS_API_KEY or BROWSERLESS_BASE_URL")
             return None
 
         endpoint = f"{self.base_url}/content"
-        params = {"token": self.api_key}
+        
+        # Prepare params - some servers don't need token
+        params = {}
+        if self.api_key:
+            params["token"] = self.api_key
 
         payload = {
             "url": url,
@@ -62,6 +70,8 @@ class WebScraperService:
                 if html:
                     logger.info(f"Fetched {len(html)} bytes from {url}")
                     return html
+                else:
+                    logger.warning(f"No HTML in response from {url}: {data}")
                     
         except Exception as e:
             logger.error(f"Browserless fetch failed for {url}: {e}")
@@ -76,11 +86,14 @@ class WebScraperService:
     ) -> Optional[bytes]:
         """Take a screenshot of a page."""
         if not self.enabled:
-            logger.warning("Browserless API key not configured")
+            logger.warning("Browserless not configured")
             return None
 
         endpoint = f"{self.base_url}/screenshot"
-        params = {"token": self.api_key}
+        
+        params = {}
+        if self.api_key:
+            params["token"] = self.api_key
 
         payload = {
             "url": url,
@@ -113,11 +126,14 @@ class WebScraperService:
     ) -> Optional[bytes]:
         """Generate PDF from a page."""
         if not self.enabled:
-            logger.warning("Browserless API key not configured")
+            logger.warning("Browserless not configured")
             return None
 
         endpoint = f"{self.base_url}/pdf"
-        params = {"token": self.api_key}
+        
+        params = {}
+        if self.api_key:
+            params["token"] = self.api_key
 
         payload = {
             "url": url,
