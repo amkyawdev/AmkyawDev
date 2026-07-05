@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, Sparkles } from "lucide-react";
 import MessageList from "@/components/Chat/MessageList";
-import { processMessage } from "@/lib/api-client";
+import { processMessage, sendChatMessage } from "@/lib/api-client";
 import { toast } from "sonner";
 
 interface Message { role: "user" | "assistant"; content: string; taskType?: string; }
@@ -36,16 +36,32 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const r = await processMessage({
-        message: input.trim(),
-        channel: "web",
-        session_id: sessionId,
-        skills: selectedSkills.length > 0 ? selectedSkills : undefined,
-      });
+      // Try Orchestrator first, fallback to Agent
+      let response: string;
+      let taskType = "chat";
+      
+      try {
+        const r = await processMessage({
+          message: input.trim(),
+          channel: "web",
+          session_id: sessionId,
+          skills: selectedSkills.length > 0 ? selectedSkills : undefined,
+        });
+        response = r.response;
+        taskType = r.task_type;
+      } catch {
+        // Fallback to old agent endpoint
+        const r = await sendChatMessage({
+          messages: [...messages, um],
+          skills: selectedSkills.length > 0 ? selectedSkills : undefined,
+        });
+        response = r.message;
+      }
+      
       setMessages((prev) => [...prev, { 
         role: "assistant", 
-        content: r.response,
-        taskType: r.task_type,
+        content: response,
+        taskType: taskType,
       }]);
     } catch (e: any) { 
       toast.error(e.message || "Failed to get response"); 

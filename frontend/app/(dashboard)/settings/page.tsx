@@ -27,7 +27,13 @@ export default function SettingsPage() {
       const status = await getServicesStatus();
       setServices(status);
     } catch (e: any) {
-      toast.error("Failed to load services status");
+      // Fallback - set default values
+      setServices({
+        llm: { configured: false, service: "openrouter" },
+        neon: { configured: false, service: "neon-postgresql" },
+        browserless: { configured: false, service: "browserless" },
+        kafka: { enabled: false },
+      });
     } finally {
       setLoading(false);
     }
