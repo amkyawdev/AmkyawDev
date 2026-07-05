@@ -10,7 +10,7 @@ router=APIRouter()
 async def chat(request:ChatRequest,openrouter=Depends(get_openrouter),skill_loader=Depends(get_skill_loader)):
     try:
         agent=CoderAgent(openrouter_service=openrouter,skill_loader=skill_loader)
-        response=await agent.chat(messages=request.messages,skills=request.skills,model=request.model)
+        response=await agent.chat(messages=[m.model_dump() for m in request.messages],skills=request.skills,model=request.model)
         return ChatResponse(message=response["message"],skills_used=response.get("skills_used",[]),tokens_used=response.get("tokens_used",0))
     except Exception as e:
         logger.error(f"Chat error: {e}")
