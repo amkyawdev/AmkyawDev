@@ -64,7 +64,12 @@ export default function ChatPage() {
         taskType: taskType,
       }]);
     } catch (e: any) { 
-      toast.error(e.message || "Failed to get response"); 
+      const msg = e?.response?.data?.detail || e?.message || "Failed to get response";
+      if (msg.includes("429") || msg.includes("rate")) {
+        toast.error("Rate limited. Please try again later.");
+      } else {
+        toast.error(msg);
+      }
     } finally { 
       setLoading(false); 
     }
